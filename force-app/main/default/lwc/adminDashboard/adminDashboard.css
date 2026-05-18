@@ -1,0 +1,309 @@
+/* ── Root ─────────────────────────────────────────────────────── */
+.dashboard-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 100vh;
+    background: #f4f6f9;
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    color: #16325c;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #032d60;
+    padding: 12px 24px;
+    flex-shrink: 0;
+}
+
+.dash-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sf-logo {
+    width: 48px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.dash-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.dash-subtitle {
+    font-size: 0.75rem;
+    color: #a8c7fa;
+    margin-top: 2px;
+}
+
+.dash-header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.last-updated {
+    text-align: right;
+}
+
+.last-updated-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #a8c7fa;
+}
+
+.last-updated-time {
+    font-size: 0.85rem;
+    color: #fff;
+    font-weight: 500;
+}
+
+.refresh-btn {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.2s;
+}
+
+.refresh-btn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Body ─────────────────────────────────────────────────────── */
+.dash-body {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.dash-sidebar {
+    background: #fff;
+    border-right: 1px solid #dde;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.kpi-card {
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+}
+
+.kpi-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+    margin-bottom: 6px;
+}
+
+.kpi-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.kpi-sub {
+    font-size: 0.7rem;
+    opacity: 0.75;
+}
+
+.kpi-blue   { background: linear-gradient(135deg, #1589ee, #0070d2); }
+.kpi-green  { background: linear-gradient(135deg, #4bca81, #27ae60); }
+.kpi-purple { background: linear-gradient(135deg, #9b59b6, #7d3c98); }
+.kpi-teal   { background: linear-gradient(135deg, #1abc9c, #16a085); }
+.kpi-orange { background: linear-gradient(135deg, #e67e22, #d35400); }
+
+/* ── Charts Grid ─────────────────────────────────────────────── */
+.dash-charts {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+}
+
+.chart-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.chart-panel {
+    background: #fff;
+    border: 1px solid #e0e0e8;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-panel-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid #f0f0f8;
+    background: #fafafa;
+}
+
+.chart-panel-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #16325c;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.chart-panel-body {
+    padding: 12px 16px 16px;
+    flex: 1;
+    position: relative;
+    height: 200px;
+}
+
+.chart-canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ── Audit Trail ─────────────────────────────────────────────── */
+.audit-section {
+    background: #fff;
+    border-top: 1px solid #e0e0e8;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.audit-header {
+    padding: 10px 24px;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f8;
+}
+
+.audit-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #16325c;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.audit-table th {
+    padding: 8px 24px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #5a6a7d;
+    background: #fafbfd;
+    border-bottom: 1px solid #eef;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.audit-table td {
+    padding: 7px 24px;
+    border-bottom: 1px solid #f5f5f8;
+    color: #16325c;
+    vertical-align: middle;
+}
+
+.audit-table tr:last-child td {
+    border-bottom: none;
+}
+
+.audit-table tr:hover td {
+    background: #f8f8fd;
+}
+
+.audit-date {
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #5a6a7d;
+    white-space: nowrap;
+}
+
+.audit-section-cell {
+    color: #0070d2;
+    font-weight: 500;
+}
+
+.audit-action {
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.audit-user {
+    font-weight: 500;
+}
+
+.no-data {
+    padding: 16px 24px;
+    color: #8090a0;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* ── Error ───────────────────────────────────────────────────── */
+.error-banner {
+    background: #ffeee8;
+    border: 1px solid #f9a98c;
+    color: #b83c00;
+    padding: 10px 24px;
+    font-size: 0.85rem;
+    margin: 8px 16px;
+    border-radius: 6px;
+}

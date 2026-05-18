@@ -1,0 +1,149 @@
+<template>
+    <div class="dashboard-root">
+
+        <!-- Header -->
+        <div class="dash-header">
+            <div class="dash-header-left">
+                <svg class="sf-logo" viewBox="0 0 52 36" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#fff" d="M21.7 3.2a9.7 9.7 0 0 1 6.9 2.9 13.4 13.4 0 0 1 7-1.9c7.4 0 13.4 6 13.4 13.4S43 31 35.6 31a13.3 13.3 0 0 1-4-.6A9.2 9.2 0 0 1 24 33.5a9.2 9.2 0 0 1-8.3-5.2 11.1 11.1 0 0 1-5.5 1.4C4.6 29.7 0 25.1 0 19.5a10.3 10.3 0 0 1 5.4-9.1 9.7 9.7 0 0 1 16.3-7.2z"/>
+                </svg>
+                <div>
+                    <div class="dash-title">Salesforce Admin Dashboard</div>
+                    <div class="dash-subtitle">Real-time org activity monitor</div>
+                </div>
+            </div>
+            <div class="dash-header-right">
+                <template if:true={isLoading}>
+                    <div class="loading-spinner"></div>
+                </template>
+                <div class="last-updated">
+                    <span class="last-updated-label">Last updated</span>
+                    <span class="last-updated-time">{lastUpdated}</span>
+                </div>
+                <button class="refresh-btn" onclick={handleRefresh} title="Refresh now">&#8635;</button>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <div class="dash-body">
+
+            <!-- Sidebar KPIs -->
+            <div class="dash-sidebar">
+
+                <div class="kpi-card kpi-blue">
+                    <div class="kpi-label">Active Users</div>
+                    <div class="kpi-value">{activeUsersCount}</div>
+                    <div class="kpi-sub">in org</div>
+                </div>
+
+                <div class="kpi-card kpi-green">
+                    <div class="kpi-label">Logins Today</div>
+                    <div class="kpi-value">{loginsToday}</div>
+                    <div class="kpi-sub">successful</div>
+                </div>
+
+                <div class="kpi-card kpi-purple">
+                    <div class="kpi-label">Active Editors</div>
+                    <div class="kpi-value">{activeEditorsCount}</div>
+                    <div class="kpi-sub">last hour</div>
+                </div>
+
+                <div class="kpi-card kpi-teal">
+                    <div class="kpi-label">Total Records</div>
+                    <div class="kpi-value">{totalRecords}</div>
+                    <div class="kpi-sub">main objects</div>
+                </div>
+
+                <div class="kpi-card kpi-orange">
+                    <div class="kpi-label">Admin Changes</div>
+                    <div class="kpi-value">{adminChangesToday}</div>
+                    <div class="kpi-sub">today</div>
+                </div>
+
+            </div>
+
+            <!-- Charts Area -->
+            <div class="dash-charts">
+
+                <div class="chart-row">
+                    <div class="chart-panel">
+                        <div class="chart-panel-header">
+                            <span class="chart-panel-title">Logins by Hour — Today</span>
+                        </div>
+                        <div class="chart-panel-body">
+                            <canvas class="chart-canvas" data-id="loginTrend"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel">
+                        <div class="chart-panel-header">
+                            <span class="chart-panel-title">Top Active Users — This Week</span>
+                        </div>
+                        <div class="chart-panel-body">
+                            <canvas class="chart-canvas" data-id="topUsers"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-row">
+                    <div class="chart-panel">
+                        <div class="chart-panel-header">
+                            <span class="chart-panel-title">Total Records by Object</span>
+                        </div>
+                        <div class="chart-panel-body">
+                            <canvas class="chart-canvas" data-id="objectCounts"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel">
+                        <div class="chart-panel-header">
+                            <span class="chart-panel-title">Records Modified Today</span>
+                        </div>
+                        <div class="chart-panel-body">
+                            <canvas class="chart-canvas" data-id="todayModified"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Audit Trail -->
+        <div class="audit-section">
+            <div class="audit-header">
+                <span class="audit-title">Recent Admin Changes (Setup Audit Trail)</span>
+            </div>
+            <template if:true={hasAuditTrail}>
+                <table class="audit-table">
+                    <thead>
+                        <tr>
+                            <th>Date / Time</th>
+                            <th>Section</th>
+                            <th>Action</th>
+                            <th>Changed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={recentAuditTrail} for:item="entry">
+                            <tr key={entry.createdDate}>
+                                <td class="audit-date">{entry.createdDate}</td>
+                                <td class="audit-section-cell">{entry.section}</td>
+                                <td class="audit-action">{entry.action}</td>
+                                <td class="audit-user">{entry.createdByName}</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+            <template if:false={hasAuditTrail}>
+                <div class="no-data">No audit trail entries found — admin access required</div>
+            </template>
+        </div>
+
+        <!-- Error -->
+        <template if:true={errorMessage}>
+            <div class="error-banner">{errorMessage}</div>
+        </template>
+
+    </div>
+</template>

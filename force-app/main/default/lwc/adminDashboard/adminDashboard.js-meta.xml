@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage">
+            <property name="refreshIntervalSeconds"
+                      type="Integer"
+                      label="Refresh Interval (seconds)"
+                      description="How often to poll for new data. Default: 30"
+                      default="30"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
