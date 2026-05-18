@@ -30,15 +30,17 @@ SFAdminDashboard/
 ├── .forceignore
 └── force-app/main/default/
     ├── classes/
-    │   ├── AdminDashboardController.cls          # Apex controller
-    │   └── AdminDashboardController.cls-meta.xml
+    │   ├── AdminDashboardController.cls              # Apex controller
+    │   ├── AdminDashboardController.cls-meta.xml
+    │   ├── AdminDashboardControllerTest.cls          # Apex test class (96% coverage)
+    │   └── AdminDashboardControllerTest.cls-meta.xml
     ├── lwc/adminDashboard/
-    │   ├── adminDashboard.html                   # Component template
-    │   ├── adminDashboard.js                     # Chart.js + Apex wiring
-    │   ├── adminDashboard.css                    # Dashboard styles
-    │   └── adminDashboard.js-meta.xml            # Target: App Page, Home Page
+    │   ├── adminDashboard.html                       # Component template
+    │   ├── adminDashboard.js                         # Chart.js + Apex wiring
+    │   ├── adminDashboard.css                        # Dashboard styles
+    │   └── adminDashboard.js-meta.xml                # Target: App Page, Home Page
     └── staticresources/
-        ├── chartjs.js                            # Chart.js 3.9.1 (self-hosted)
+        ├── chartjs.js                                # Chart.js 3.9.1 (self-hosted)
         └── chartjs.resource-meta.xml
 ```
 
@@ -51,6 +53,26 @@ SFAdminDashboard/
 
 ```bash
 sf project deploy start --target-org <your-org-alias> --source-dir force-app
+```
+
+## Tests
+
+The test class `AdminDashboardControllerTest` provides **96% code coverage** (75/78 lines) across 6 test methods.
+
+| Test Method | What It Covers |
+|-------------|----------------|
+| `testGetDashboardData_returnsData` | Method returns a non-null object; all scalar KPIs are non-negative |
+| `testGetDashboardData_objectCounts` | `objectCounts` has exactly 5 entries, one per object, all with valid names and counts |
+| `testGetDashboardData_todayModified` | `todayModified` has 5 entries and reflects records inserted in `@TestSetup` |
+| `testGetDashboardData_totalRecordsMatchesSumOfCounts` | `totalRecords` equals the sum of all `objectCounts` entries |
+| `testGetDashboardData_listsNonNull` | All list fields (`loginTrend`, `recentAuditTrail`, `topActiveUsers`, etc.) are non-null |
+| `testInnerClasses` | Direct instantiation and field assignment of all four inner classes |
+
+Run only the dashboard tests (avoids unrelated org test failures):
+
+```bash
+sf project deploy start --target-org <your-org-alias> --source-dir force-app \
+  --test-level RunSpecifiedTests --tests AdminDashboardControllerTest
 ```
 
 ## Add to a Page
