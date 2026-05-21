@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Grants read/write access to OrgStorageSnapshot__c fields for non-admin users</description>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrgStorageSnapshot__c.DataMBMax__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrgStorageSnapshot__c.DataMBUsed__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrgStorageSnapshot__c.FileMBMax__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>OrgStorageSnapshot__c.FileMBUsed__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <label>Admin Storage Access</label>
+</PermissionSet>

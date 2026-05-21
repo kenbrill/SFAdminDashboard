@@ -201,11 +201,19 @@
     letter-spacing: 0.04em;
 }
 
+.chart-row-single {
+    grid-template-columns: 1fr;
+}
+
 .chart-panel-body {
     padding: 12px 16px 16px;
     flex: 1;
     position: relative;
     height: 200px;
+}
+
+.chart-panel-body-tall {
+    height: 220px;
 }
 
 .chart-canvas {

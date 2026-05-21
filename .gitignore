@@ -1,0 +1,5 @@
+.sf/
+org_retrieve/
+/tmp/
+*.swp
+.DS_Store

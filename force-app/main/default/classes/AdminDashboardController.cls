@@ -35,20 +35,39 @@ public with sharing class AdminDashboardController {
         @AuraEnabled public Integer loginCount;
     }
 
+    public class StorageSnapshot {
+        @AuraEnabled public String  snapshotDate;
+        @AuraEnabled public Decimal dataPct;
+        @AuraEnabled public Decimal filePct;
+    }
+
+    @AuraEnabled(cacheable=false)
+    public static List<StorageSnapshot> getStorageHistory() {
+        List<StorageSnapshot> result = new List<StorageSnapshot>();
+        for (OrgStorageSnapshot__c snap : [
+            SELECT SnapshotDate__c, DataMBUsed__c, DataMBMax__c, FileMBUsed__c, FileMBMax__c
+            FROM OrgStorageSnapshot__c
+            ORDER BY SnapshotDate__c ASC
+            LIMIT 90
+        ]) {
+            Decimal dataUsed = snap.DataMBUsed__c != null ? snap.DataMBUsed__c : 0;
+            Decimal dataMax  = snap.DataMBMax__c  != null && snap.DataMBMax__c > 0 ? snap.DataMBMax__c : 1;
+            Decimal fileUsed = snap.FileMBUsed__c != null ? snap.FileMBUsed__c : 0;
+            Decimal fileMax  = snap.FileMBMax__c  != null && snap.FileMBMax__c > 0 ? snap.FileMBMax__c : 1;
+            StorageSnapshot ss = new StorageSnapshot();
+            ss.snapshotDate = String.valueOf(snap.SnapshotDate__c);
+            ss.dataPct      = (dataUsed / dataMax * 100).setScale(1);
+            ss.filePct      = (fileUsed / fileMax * 100).setScale(1);
+            result.add(ss);
+        }
+        return result;
+    }
+
     @AuraEnabled(cacheable=false)
     public static DashboardData getDashboardData() {
         DashboardData data = new DashboardData();
-
-        // ── KPIs ──────────────────────────────────────────────────────
-        data.activeUsersCount = Database.countQuery(
-            'SELECT COUNT() FROM User WHERE IsActive = true'
-        );
-
-        data.loginsToday = Database.countQuery(
-            'SELECT COUNT() FROM LoginHistory WHERE LoginTime = TODAY'
-        );
-
-        // Users who modified records in the last hour (use bind var — LAST_N_HOURS:n is invalid in inline SOQL)
+        data.activeUsersCount = Database.countQuery('SELECT COUNT() FROM User WHERE IsActive = true');
+        data.loginsToday = Database.countQuery('SELECT COUNT() FROM LoginHistory WHERE LoginTime = TODAY');
         DateTime oneHourAgo = DateTime.now().addHours(-1);
         Set<Id> editorIds = new Set<Id>();
         for (AggregateResult ar : [SELECT LastModifiedById FROM Account     WHERE LastModifiedDate >= :oneHourAgo GROUP BY LastModifiedById]) { editorIds.add((Id) ar.get('LastModifiedById')); }
@@ -57,15 +76,12 @@ public with sharing class AdminDashboardController {
         for (AggregateResult ar : [SELECT LastModifiedById FROM Case        WHERE LastModifiedDate >= :oneHourAgo GROUP BY LastModifiedById]) { editorIds.add((Id) ar.get('LastModifiedById')); }
         for (AggregateResult ar : [SELECT LastModifiedById FROM Lead        WHERE LastModifiedDate >= :oneHourAgo GROUP BY LastModifiedById]) { editorIds.add((Id) ar.get('LastModifiedById')); }
         data.activeEditorsCount = editorIds.size();
-
-        // ── Object record counts ──────────────────────────────────────
         Integer accCount  = Database.countQuery('SELECT COUNT() FROM Account');
         Integer conCount  = Database.countQuery('SELECT COUNT() FROM Contact');
         Integer leadCount = Database.countQuery('SELECT COUNT() FROM Lead');
         Integer oppCount  = Database.countQuery('SELECT COUNT() FROM Opportunity');
         Integer caseCount = Database.countQuery('SELECT COUNT() FROM Case');
         data.totalRecords = accCount + conCount + leadCount + oppCount + caseCount;
-
         data.objectCounts = new List<ObjectStat>{
             makeStat('Account',     accCount),
             makeStat('Contact',     conCount),
@@ -73,8 +89,6 @@ public with sharing class AdminDashboardController {
             makeStat('Opportunity', oppCount),
             makeStat('Case',        caseCount)
         };
-
-        // ── Modified today ────────────────────────────────────────────
         data.todayModified = new List<ObjectStat>{
             makeStat('Account',     Database.countQuery('SELECT COUNT() FROM Account     WHERE LastModifiedDate = TODAY')),
             makeStat('Contact',     Database.countQuery('SELECT COUNT() FROM Contact     WHERE LastModifiedDate = TODAY')),
@@ -82,31 +96,16 @@ public with sharing class AdminDashboardController {
             makeStat('Opportunity', Database.countQuery('SELECT COUNT() FROM Opportunity WHERE LastModifiedDate = TODAY')),
             makeStat('Case',        Database.countQuery('SELECT COUNT() FROM Case        WHERE LastModifiedDate = TODAY'))
         };
-
-        // ── Login trend by hour today ─────────────────────────────────
         data.loginTrend = new List<HourlyLogin>();
-        for (AggregateResult ar : [
-            SELECT HOUR_IN_DAY(LoginTime) hr, COUNT(Id) cnt
-            FROM LoginHistory
-            WHERE LoginTime = TODAY
-            GROUP BY HOUR_IN_DAY(LoginTime)
-            ORDER BY HOUR_IN_DAY(LoginTime)
-        ]) {
+        for (AggregateResult ar : [SELECT HOUR_IN_DAY(LoginTime) hr, COUNT(Id) cnt FROM LoginHistory WHERE LoginTime = TODAY GROUP BY HOUR_IN_DAY(LoginTime) ORDER BY HOUR_IN_DAY(LoginTime)]) {
             HourlyLogin hl = new HourlyLogin();
             hl.hour  = (Integer) ar.get('hr');
             hl.count = (Integer) ar.get('cnt');
             data.loginTrend.add(hl);
         }
-
-        // ── Recent audit trail ────────────────────────────────────────
         data.recentAuditTrail = new List<AuditEntry>();
         try {
-            for (SetupAuditTrail sat : [
-                SELECT Action, Section, CreatedBy.Name, CreatedDate
-                FROM SetupAuditTrail
-                ORDER BY CreatedDate DESC
-                LIMIT 15
-            ]) {
+            for (SetupAuditTrail sat : [SELECT Action, Section, CreatedBy.Name, CreatedDate FROM SetupAuditTrail ORDER BY CreatedDate DESC LIMIT 15]) {
                 AuditEntry ae = new AuditEntry();
                 ae.action        = sat.Action;
                 ae.section       = sat.Section != null ? sat.Section : '—';
@@ -114,26 +113,15 @@ public with sharing class AdminDashboardController {
                 ae.createdDate   = sat.CreatedDate.format('yyyy-MM-dd HH:mm');
                 data.recentAuditTrail.add(ae);
             }
-            data.adminChangesToday = Database.countQuery(
-                'SELECT COUNT() FROM SetupAuditTrail WHERE CreatedDate = TODAY'
-            );
+            data.adminChangesToday = Database.countQuery('SELECT COUNT() FROM SetupAuditTrail WHERE CreatedDate = TODAY');
         } catch (Exception e) {
             data.adminChangesToday = 0;
         }
-
-        // ── Top active users this week (two-step: ids+counts then names) ──
         data.topActiveUsers = new List<UserActivity>();
         try {
             DateTime weekStart = DateTime.now().addDays(-7);
             Map<Id, Integer> loginCounts = new Map<Id, Integer>();
-            for (AggregateResult ar : [
-                SELECT UserId uid, COUNT(Id) cnt
-                FROM LoginHistory
-                WHERE LoginTime >= :weekStart
-                GROUP BY UserId
-                ORDER BY COUNT(Id) DESC
-                LIMIT 8
-            ]) {
+            for (AggregateResult ar : [SELECT UserId uid, COUNT(Id) cnt FROM LoginHistory WHERE LoginTime >= :weekStart GROUP BY UserId ORDER BY COUNT(Id) DESC LIMIT 8]) {
                 loginCounts.put((Id) ar.get('uid'), (Integer) ar.get('cnt'));
             }
             if (!loginCounts.isEmpty()) {
@@ -149,10 +137,7 @@ public with sharing class AdminDashboardController {
                 }
                 data.topActiveUsers.sort();
             }
-        } catch (Exception e) {
-            // LoginHistory may not be accessible
-        }
-
+        } catch (Exception e) {}
         return data;
     }
 

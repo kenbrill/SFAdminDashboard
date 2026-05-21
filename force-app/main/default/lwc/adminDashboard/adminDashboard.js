@@ -2,6 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import { loadScript }                   from 'lightning/platformResourceLoader';
 import chartjsResource                  from '@salesforce/resourceUrl/chartjs';
 import getDashboardData                 from '@salesforce/apex/AdminDashboardController.getDashboardData';
+import getStorageHistory                from '@salesforce/apex/AdminDashboardController.getStorageHistory';
 
 const OBJECT_COLORS = {
     Account:     'rgba(21, 137, 238, 0.8)',
@@ -48,7 +49,7 @@ export default class AdminDashboard extends LightningElement {
             .then(() => {
                 this._chartsInitialized = true;
                 if (this._pendingData) {
-                    this._renderCharts(this._pendingData);
+                    this._renderCharts(this._pendingData.data, this._pendingData.storageHistory);
                     this._pendingData = null;
                 }
             })
@@ -69,13 +70,13 @@ export default class AdminDashboard extends LightningElement {
     _loadData() {
         this.isLoading    = true;
         this.errorMessage = null;
-        getDashboardData()
-            .then(data => {
+        Promise.all([getDashboardData(), getStorageHistory()])
+            .then(([data, storageHistory]) => {
                 this._applyKpis(data);
                 if (this._chartsInitialized) {
-                    this._renderCharts(data);
+                    this._renderCharts(data, storageHistory);
                 } else {
-                    this._pendingData = data;
+                    this._pendingData = { data, storageHistory };
                 }
                 this.isLoading   = false;
                 this.lastUpdated = new Date().toLocaleTimeString();
@@ -96,11 +97,12 @@ export default class AdminDashboard extends LightningElement {
         this.hasAuditTrail      = this.recentAuditTrail.length > 0;
     }
 
-    _renderCharts(data) {
+    _renderCharts(data, storageHistory = []) {
         this._renderLoginTrend(data.loginTrend || []);
         this._renderTopUsers(data.topActiveUsers || []);
         this._renderObjectCounts(data.objectCounts || []);
         this._renderTodayModified(data.todayModified || []);
+        this._renderStorageTrend(storageHistory);
     }
 
     _getCanvas(dataId) {
@@ -250,6 +252,63 @@ export default class AdminDashboard extends LightningElement {
                         grid: { color: 'rgba(0,0,0,0.05)' }
                     },
                     x: { ticks: { color: '#555' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    _renderStorageTrend(snapshots) {
+        const canvas = this._getCanvas('storageTrend');
+        if (!canvas) return;
+        this._destroyChart('storageTrend');
+
+        if (!snapshots.length) {
+            this._charts.storageTrend = new window.Chart(canvas, this._emptyChart('No storage snapshots yet — scheduler not running'));
+            return;
+        }
+
+        this._charts.storageTrend = new window.Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: snapshots.map(s => s.snapshotDate),
+                datasets: [
+                    {
+                        label: 'Data Storage %',
+                        data: snapshots.map(s => parseFloat(s.dataPct)),
+                        borderColor: 'rgba(21, 137, 238, 0.9)',
+                        backgroundColor: 'rgba(21, 137, 238, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'File Storage %',
+                        data: snapshots.map(s => parseFloat(s.filePct)),
+                        borderColor: 'rgba(76, 187, 124, 0.9)',
+                        backgroundColor: 'rgba(76, 187, 124, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#555', font: { size: 11 } } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { color: '#555', callback: v => v + '%' },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        ticks: { color: '#555', maxTicksLimit: 15 },
+                        grid: { display: false }
+                    }
                 }
             }
         });

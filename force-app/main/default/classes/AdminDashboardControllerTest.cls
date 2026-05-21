@@ -3,7 +3,6 @@ private class AdminDashboardControllerTest {
 
     @TestSetup
     static void makeData() {
-        // Create test records across the main objects so counts/modified queries return data
         Account acc = new Account(Name = 'Test Account');
         insert acc;
 
@@ -31,10 +30,7 @@ private class AdminDashboardControllerTest {
         AdminDashboardController.DashboardData data = AdminDashboardController.getDashboardData();
         Test.stopTest();
 
-        // Returned object is non-null
         System.assertNotEquals(null, data, 'getDashboardData() should not return null');
-
-        // Scalar KPIs are non-negative integers
         System.assert(data.activeUsersCount   >= 0, 'activeUsersCount should be >= 0');
         System.assert(data.loginsToday        >= 0, 'loginsToday should be >= 0');
         System.assert(data.activeEditorsCount >= 0, 'activeEditorsCount should be >= 0');
@@ -48,20 +44,18 @@ private class AdminDashboardControllerTest {
         AdminDashboardController.DashboardData data = AdminDashboardController.getDashboardData();
         Test.stopTest();
 
-        // objectCounts list has exactly 5 entries (Account/Contact/Lead/Opportunity/Case)
         System.assertEquals(5, data.objectCounts.size(), 'objectCounts should have 5 entries');
-
         Set<String> names = new Set<String>();
         for (AdminDashboardController.ObjectStat s : data.objectCounts) {
-            System.assertNotEquals(null, s.objectName, 'objectName should not be null');
-            System.assert(s.count >= 0, 'count should be >= 0 for ' + s.objectName);
+            System.assertNotEquals(null, s.objectName);
+            System.assert(s.count >= 0);
             names.add(s.objectName);
         }
-        System.assert(names.contains('Account'),     'objectCounts should include Account');
-        System.assert(names.contains('Contact'),     'objectCounts should include Contact');
-        System.assert(names.contains('Lead'),        'objectCounts should include Lead');
-        System.assert(names.contains('Opportunity'), 'objectCounts should include Opportunity');
-        System.assert(names.contains('Case'),        'objectCounts should include Case');
+        System.assert(names.contains('Account'));
+        System.assert(names.contains('Contact'));
+        System.assert(names.contains('Lead'));
+        System.assert(names.contains('Opportunity'));
+        System.assert(names.contains('Case'));
     }
 
     @IsTest
@@ -70,9 +64,7 @@ private class AdminDashboardControllerTest {
         AdminDashboardController.DashboardData data = AdminDashboardController.getDashboardData();
         Test.stopTest();
 
-        System.assertEquals(5, data.todayModified.size(), 'todayModified should have 5 entries');
-
-        // The records we just inserted were modified today, so totals should be > 0
+        System.assertEquals(5, data.todayModified.size());
         Integer totalModified = 0;
         for (AdminDashboardController.ObjectStat s : data.todayModified) {
             totalModified += s.count;
@@ -90,7 +82,7 @@ private class AdminDashboardControllerTest {
         for (AdminDashboardController.ObjectStat s : data.objectCounts) {
             sum += s.count;
         }
-        System.assertEquals(sum, data.totalRecords, 'totalRecords should equal sum of objectCounts');
+        System.assertEquals(sum, data.totalRecords);
     }
 
     @IsTest
@@ -99,11 +91,11 @@ private class AdminDashboardControllerTest {
         AdminDashboardController.DashboardData data = AdminDashboardController.getDashboardData();
         Test.stopTest();
 
-        System.assertNotEquals(null, data.objectCounts,    'objectCounts should not be null');
-        System.assertNotEquals(null, data.todayModified,   'todayModified should not be null');
-        System.assertNotEquals(null, data.loginTrend,      'loginTrend should not be null');
-        System.assertNotEquals(null, data.recentAuditTrail,'recentAuditTrail should not be null');
-        System.assertNotEquals(null, data.topActiveUsers,  'topActiveUsers should not be null');
+        System.assertNotEquals(null, data.objectCounts);
+        System.assertNotEquals(null, data.todayModified);
+        System.assertNotEquals(null, data.loginTrend);
+        System.assertNotEquals(null, data.recentAuditTrail);
+        System.assertNotEquals(null, data.topActiveUsers);
     }
 
     @IsTest
@@ -131,5 +123,32 @@ private class AdminDashboardControllerTest {
         ua.userName   = 'Test User';
         ua.loginCount = 7;
         System.assertEquals(7, ua.loginCount);
+    }
+
+    @IsTest
+    static void testGetStorageHistory_empty() {
+        Test.startTest();
+        List<AdminDashboardController.StorageSnapshot> result = AdminDashboardController.getStorageHistory();
+        Test.stopTest();
+        System.assertEquals(0, result.size());
+    }
+
+    @IsTest
+    static void testGetStorageHistory_withData() {
+        insert new OrgStorageSnapshot__c(
+            SnapshotDateKey__c = '2026-01-15',
+            SnapshotDate__c    = Date.newInstance(2026, 1, 15),
+            DataMBMax__c       = 5,
+            DataMBUsed__c      = 1,
+            FileMBMax__c       = 20,
+            FileMBUsed__c      = 4
+        );
+        Test.startTest();
+        List<AdminDashboardController.StorageSnapshot> result = AdminDashboardController.getStorageHistory();
+        Test.stopTest();
+        System.assertEquals(1, result.size());
+        System.assertEquals('2026-01-15', result[0].snapshotDate);
+        System.assertEquals(20.0, result[0].dataPct);
+        System.assertEquals(20.0, result[0].filePct);
     }
 }
